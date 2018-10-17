@@ -1,0 +1,117 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+* The Hack CPU (Central Processing unit), consisting of an ALU,
+* two registers named A and D, and a program counter named PC.
+on. The addressM and pc outputs are clocked: although they
+* are affected by the execution of the current instruction, they commit
+* to their new values only in the next time step. If reset==1 then the
+* CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather
+* than to the address resulting from executing the current instruction.
+*/
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+    instruction[16], // Instruction for execution
+    reset;           // Signals whether to re-start the current
+    // program (reset==1) or continue executing
+    // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+    writeM,          // Write to M?
+    addressM[15],    // Address in data memory (of M)
+    pc[15];          // address of next instruction
+
+    PARTS:
+
+    
+    /********************************* START  *************************************8*/
+    // The A-instruction is used to set the A register to a 15-bit value
+    //
+    Not(in=instruction[15], out=aInst);
+    //if this instruction is c-instruction
+    Not(in=aInst, out=cInst);
+
+
+    /********************************* M  *************************************8*/
+    // if instruction[3] == 1 => d3 == 1, output to M ( out = writeM)
+	And(a = cInst,b = instruction[3],out = writeM);
+
+    /********************************* D  *************************************8*/
+    // if instruction[4] == 1 => d2 == 1, output to D
+  	And(a = cInst,b = instruction[4],out = loadD);
+	DRegister(in = outAlu,load = loadD,out = outDregister);
+
+    /********************************* A  *************************************8*/
+    //@123: this is a a-instruction ---- aInst
+    //Fig4.4: When instuction[5] == 1, d3 == 1, A will be the dest ---- aRegister
+
+    And(a = instruction[5], b = cInst, out = aRegister);
+    Or(a = aRegister, b = aInst, out = loadA);
+    ARegister(in = outM1, load = loadA, out[0..14] = addressM, out = outAregister);
+
+
+
+
+
+    /********************************* #1 Mux  *************************************8*/
+    Mux16(a = instruction, b = outAlu, sel = cInst, out = outM1);
+
+
+    /********************************* #2 Mux  *************************************8*/
+    //According to Fig 4.3:
+    //When instruction[12] == 0, all comp mnemonic is about D and A
+    //When instruction[12] == 1, all comp mnemonic is about D and M
+	And(a = cInst,b = instruction[12],out = aOrm);
+    Mux16(a = outAregister, b = inM, sel = aOrm, out = outM2);
+
+
+
+
+    /********************************* ALU  *************************************8*/
+
+    // zr: true if out == 0
+    // ng: true if out < 0
+
+    ALU(x = outDregister, y = outM2,
+        zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6],
+        out = outM, out = outAlu,
+        zr = zr, ng = ng);
+
+
+    /********************************* JUMP  *************************************8*/
+
+    // j1 == instruction[2]
+    // j2 == instruction[1]
+    // j3 == instruction[0]
+    //jump jeg
+    // 0 0 0 | No jump
+    // 0 0 1 |       po
+    // 0 1 0 |    zr
+    // 0 1 1 |    zr po
+    // 1 0 0 | ng
+    // 1 0 1 | ng    po
+    // 1 1 0 | ng zr
+    // 1 1 1 | ng zr po
+
+    Not(in = ng, out = nng);
+    Not(in = zr, out = nzr);
+    And(a = nng, b = nzr, out = po);
+
+
+    And(a = instruction[2], b = ng, out = negative);
+    And(a = instruction[1], b = zr, out = zero);
+    And(a = instruction[0], b = po, out = positive);
+
+    Or(a = negative, b = zero, out = nonPositive);
+    Or(a = nonPositive, b = positive, out = loadPre);
+
+    And(a = cInst, b = loadPre, out = loadPc);
+
+    /********************************* PC  *************************************8*/
+    PC(in = outAregister, load = loadPc, inc = true, reset = reset, out[0..14] = pc);
+}

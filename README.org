@@ -1,0 +1,14 @@
+#+TITLE: WIP
+
+*** DONE Boolean Logic
+*** DONE Boolean Arithmetic
+*** DONE Sequential Logic
+*** DONE Machine language
+*** DONE Computer Architecture
+*** DONE Assembler
+*** TODO Virtual Machine I: Stack Arithmetic
+*** TODO Virtual Machine I: Program Control
+*** TODO Virtual Machine I: High-Level Language
+*** TODO Compiler I: Syntax Analysis
+*** TODO Compiler I: Code Generation
+*** TODO Operating system
