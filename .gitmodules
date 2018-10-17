@@ -1,3 +1,3 @@
-[submodule "06-Assembler"]
+[submodule "Assembler-for-nand2tetris"]
 	path = 06
-	url = https://github.com/FirstLoveLife/Assembler-for-nand2tetris
+	url = git@github.com:FirstLoveLife/Assembler-for-nand2tetris.git
